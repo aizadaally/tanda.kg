@@ -3,6 +3,9 @@
 {% block title %}{{ product.name }} - Tanda.kg{% endblock %}
 
 {% block content %}
+<!-- Add CSRF token for AJAX -->
+{% csrf_token %}
+
 <section class="py-4">
     <div class="container">
         <!-- Breadcrumb -->
@@ -112,9 +115,13 @@
                         <div class="mb-3">
                             <label class="form-label">Количество:</label>
                             <div class="d-flex align-items-center">
-                                <button type="button" class="btn btn-outline-secondary" onclick="decreaseQuantity()">-</button>
-                                <input type="number" id="quantity" class="form-control mx-2 text-center" value="1" min="1" style="width: 80px;">
-                                <button type="button" class="btn btn-outline-secondary" onclick="increaseQuantity()">+</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="decreaseQuantity()">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" id="quantity" class="form-control mx-2 text-center" value="1" min="1" style="width: 80px;" onchange="updateTotal()">
+                                <button type="button" class="btn btn-outline-secondary" onclick="increaseQuantity()">
+                                    <i class="bi bi-plus"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -123,53 +130,67 @@
                             <h5>Итого: <span id="totalPrice" class="text-primary">{{ product.price|floatformat:0 }}</span> сом</h5>
                         </div>
 
-                        <!-- Buy Button -->
+                        <!-- Buy Buttons -->
                         <div class="d-grid gap-2 mb-3">
                             {% if user.is_authenticated %}
                                 <!-- Add to Cart Button -->
                                 <button type="button" 
                                         class="btn btn-outline-primary-custom btn-lg"
-                                        onclick="addToCart({{ product.id }})">
+                                        onclick="addToCartFromDetail()">
                                     <i class="bi bi-bag-plus"></i> Добавить в корзину
                                 </button>
                                 
                                 <!-- QR Purchase Button -->
+                                {% if product.producer.qr_code %}
                                 <button type="button" 
                                         class="btn btn-primary-custom btn-lg" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#purchaseModal">
                                     <i class="bi bi-qr-code-scan"></i> Купить через QR-код
                                 </button>
+                                {% endif %}
                             {% else %}
                                 <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary-custom btn-lg">
                                     <i class="bi bi-box-arrow-in-right"></i> Войти для покупки
                                 </a>
                             {% endif %}
                             
-                            <button type="button" class="btn btn-outline-secondary" onclick="toggleFavorite({{ product.id }})">
+                            <!-- Favorite Button -->
+                            <button type="button" 
+                                    class="btn btn-outline-secondary" 
+                                    onclick="toggleFavoriteLocal({{ product.id }})">
                                 <i class="bi bi-heart" id="favorite-icon"></i> В избранное
                             </button>
                         </div>
 
                         <!-- Contact Producer -->
-                        <div class="mt-3 text-center">
-                            <small class="text-muted">
-                                Есть вопросы? 
-                                {% if product.producer.whatsapp_number %}
-                                    <a href="https://wa.me/{{ product.producer.whatsapp_number }}" 
-                                       target="_blank" 
-                                       class="text-decoration-none">
-                                        <i class="bi bi-whatsapp text-success"></i> Написать в WhatsApp
-                                    </a>
-                                {% elif product.producer.phone_number %}
-                                    <a href="tel:{{ product.producer.phone_number }}" 
-                                       class="text-decoration-none">
-                                        <i class="bi bi-phone"></i> Позвонить
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">Связаться с производителем</span>
-                                {% endif %}
-                            </small>
+                        <div class="mt-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Есть вопросы?</h6>
+                                    <div class="d-grid gap-2">
+                                        {% if product.producer.whatsapp_number %}
+                                            <a href="https://wa.me/{{ product.producer.whatsapp_number }}?text=Здравствуйте! Интересует товар: {{ product.name }} - {{ product.price|floatformat:0 }} сом.%0AСсылка: {{ request.build_absolute_uri }}" 
+                                               target="_blank" 
+                                               class="btn btn-success">
+                                                <i class="bi bi-whatsapp"></i> WhatsApp
+                                            </a>
+                                        {% endif %}
+                                        
+                                        {% if product.producer.phone_number %}
+                                            <a href="tel:{{ product.producer.phone_number }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="bi bi-phone"></i> {{ product.producer.phone_number }}
+                                            </a>
+                                        {% endif %}
+                                        
+                                        {% if not product.producer.whatsapp_number and not product.producer.phone_number %}
+                                            <p class="text-muted mb-0">Контакты не указаны</p>
+                                            <small class="text-muted">Производитель может добавить контакты в профиле</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -179,6 +200,7 @@
 </section>
 
 <!-- Producer QR Code Modal -->
+{% if product.producer.qr_code %}
 <div class="modal fade" id="purchaseModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -189,131 +211,62 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
-                {% if product.producer.qr_code %}
-                    <div class="mb-3">
-                        <img src="{{ product.producer.qr_code.url }}" 
-                             class="img-fluid border rounded" 
-                             alt="QR код для оплаты"
-                             style="max-width: 250px;">
+                <div class="mb-3">
+                    <img src="{{ product.producer.qr_code.url }}" 
+                         class="img-fluid border rounded" 
+                         alt="QR код для оплаты"
+                         style="max-width: 250px;">
+                </div>
+                <h6>{{ product.producer.name }}</h6>
+                <p class="text-muted mb-3">
+                    Отсканируйте QR-код через приложение вашего банка
+                </p>
+                
+                <!-- Order Summary -->
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="d-flex justify-content-between">
+                        <span>{{ product.name }}</span>
+                        <span>{{ product.price|floatformat:0 }} сом</span>
                     </div>
-                    <h6>{{ product.producer.name }}</h6>
-                    <p class="text-muted mb-3">
-                        Отсканируйте QR-код через приложение вашего банка
-                    </p>
-                    
-                    <!-- Order Summary -->
-                    <div class="border rounded p-3 mb-3 bg-light">
-                        <div class="d-flex justify-content-between">
-                            <span>{{ product.name }}</span>
-                            <span>{{ product.price|floatformat:0 }} сом</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Количество:</span>
-                            <span id="modalQuantity">1</span>
-                        </div>
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between fw-bold">
-                            <span>Итого:</span>
-                            <span id="modalTotal">{{ product.price|floatformat:0 }} сом</span>
-                        </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Количество:</span>
+                        <span id="modalQuantity">1</span>
                     </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Итого:</span>
+                        <span id="modalTotal">{{ product.price|floatformat:0 }} сом</span>
+                    </div>
+                </div>
 
-                    <!-- Payment Instructions -->
-                    <div class="alert alert-info text-start">
-                        <small>
-                            <strong>Как оплатить:</strong><br>
-                            1. Откройте приложение банка (MBank, Оптима, Демир и др.)<br>
-                            2. Выберите "Оплата по QR" или "Сканер"<br>
-                            3. Отсканируйте код выше<br>
-                            4. Укажите сумму: <strong id="paymentAmount">{{ product.price|floatformat:0 }} сом</strong><br>
-                            5. Подтвердите оплату
-                        </small>
-                    </div>
-
-                {% else %}
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <strong>QR-код недоступен</strong><br>
-                        Производитель еще не загрузил QR-код для оплаты.
-                        Свяжитесь с ним напрямую для покупки.
-                    </div>
-                {% endif %}
+                <!-- Payment Instructions -->
+                <div class="alert alert-info text-start">
+                    <small>
+                        <strong>Как оплатить:</strong><br>
+                        1. Откройте приложение банка (MBank, Оптима, Демир и др.)<br>
+                        2. Выберите "Оплата по QR" или "Сканер"<br>
+                        3. Отсканируйте код выше<br>
+                        4. Укажите сумму: <strong id="paymentAmount">{{ product.price|floatformat:0 }} сом</strong><br>
+                        5. Подтвердите оплату
+                    </small>
+                </div>
             </div>
             <div class="modal-footer">
-                {% if product.producer.qr_code %}
-                    <button type="button" class="btn btn-success" onclick="markAsPurchased()">
-                        <i class="bi bi-check-circle"></i> Я оплатил
-                    </button>
-                {% endif %}
+                <button type="button" class="btn btn-success" onclick="markAsPurchased()">
+                    <i class="bi bi-check-circle"></i> Я оплатил
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Reviews Section -->
-{% if reviews %}
-<section class="py-5 bg-light">
-    <div class="container">
-        <h3 class="mb-4">Отзывы покупателей</h3>
-        <div class="row">
-            {% for review in reviews|slice:":6" %}
-            <div class="col-md-6 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="mb-0">{{ review.user.first_name|default:review.user.username }}</h6>
-                            <div class="text-warning">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= review.rating %}
-                                        <i class="bi bi-star-fill"></i>
-                                    {% else %}
-                                        <i class="bi bi-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <p class="text-muted mb-1">{{ review.text }}</p>
-                        <small class="text-muted">{{ review.created_at|date:"d.m.Y" }}</small>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <!-- Add Review Button -->
-        {% if user.is_authenticated %}
-            <div class="text-center mt-4">
-                <a href="{% url 'add_review' product.pk %}" class="btn btn-outline-primary-custom">
-                    <i class="bi bi-plus-circle"></i> Оставить отзыв
-                </a>
-            </div>
-        {% endif %}
-    </div>
-</section>
-{% endif %}
-
-<!-- Similar Products -->
-{% if similar_products %}
-<section class="py-5">
-    <div class="container">
-        <h3 class="mb-4">Похожие товары</h3>
-        <div class="row">
-            {% for product in similar_products %}
-            <div class="col-lg-3 col-md-6 mb-4">
-                {% include 'frontend/includes/product_card.html' %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
 {% endif %}
 
 <script>
 const basePrice = {{ product.price }};
 
 function updateTotal() {
-    const quantity = parseInt(document.getElementById('quantity').value);
+    const quantity = parseInt(document.getElementById('quantity').value) || 1;
     const total = basePrice * quantity;
     document.getElementById('totalPrice').textContent = total.toFixed(0);
     
@@ -341,18 +294,23 @@ function decreaseQuantity() {
     }
 }
 
-function addToCart(productId) {
+function addToCartFromDetail() {
     const quantity = parseInt(document.getElementById('quantity').value);
+    const button = event.target;
+    const originalText = button.innerHTML;
     
-    // Send AJAX request to add to cart
-    fetch('/cart/add/', {
+    // Show loading state
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Добавляем...';
+    button.disabled = true;
+    
+    fetch('{% url "add_to_cart" %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
         },
         body: JSON.stringify({
-            product_id: productId,
+            product_id: {{ product.id }},
             quantity: quantity
         })
     })
@@ -360,60 +318,73 @@ function addToCart(productId) {
     .then(data => {
         if (data.success) {
             // Update cart count in navbar
-            const cartCount = document.getElementById('cart-count');
-            if (cartCount) {
-                cartCount.textContent = data.cart_count;
-                cartCount.style.display = data.cart_count > 0 ? 'inline' : 'none';
-            }
+            updateCartCount();
+            showMessage(data.message, 'success');
             
-            // Show success message
-            showMessage('Товар добавлен в корзину!', 'success');
+            // Change button text temporarily
+            button.innerHTML = '<i class="bi bi-check"></i> Добавлено!';
+            button.className = 'btn btn-success btn-lg';
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.className = 'btn btn-outline-primary-custom btn-lg';
+                button.disabled = false;
+            }, 2000);
         } else {
-            showMessage('Ошибка при добавлении в корзину', 'error');
+            showMessage(data.message, 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showMessage('Ошибка при добавлении в корзину', 'error');
+        button.innerHTML = originalText;
+        button.disabled = false;
     });
 }
 
-function toggleFavorite(productId) {
-    // Send AJAX request to toggle favorite
-    fetch('/favorites/toggle/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-        },
-        body: JSON.stringify({
-            product_id: productId
+function toggleFavoriteLocal(productId) {
+    {% if user.is_authenticated %}
+        const icon = document.getElementById('favorite-icon');
+        
+        fetch('{% url "toggle_favorite" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                product_id: productId
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const icon = document.getElementById('favorite-icon');
-            if (data.is_favorite) {
-                icon.className = 'bi bi-heart-fill text-danger';
-                showMessage('Добавлено в избранное!', 'success');
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.is_favorite) {
+                    icon.className = 'bi bi-heart-fill text-danger';
+                } else {
+                    icon.className = 'bi bi-heart';
+                }
+                showMessage(data.message, data.is_favorite ? 'success' : 'info');
             } else {
-                icon.className = 'bi bi-heart';
-                showMessage('Удалено из избранного', 'info');
+                showMessage(data.message, 'error');
             }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Войдите, чтобы добавить в избранное', 'warning');
-    });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Ошибка при обновлении избранного', 'error');
+        });
+    {% else %}
+        showMessage('Войдите в систему, чтобы добавить в избранное', 'warning');
+        setTimeout(() => {
+            window.location.href = '{% url "login" %}';
+        }, 1500);
+    {% endif %}
 }
 
 function markAsPurchased() {
-    const quantity = parseInt(document.getElementById('quantity').value);
-    
-    // Send AJAX request to mark as purchased
-    fetch(`/products/ajax/mark-sold/{{ product.pk }}/`, {
+    fetch('{% url "mark_product_sold" product.pk %}', {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -437,38 +408,31 @@ function markAsPurchased() {
     });
 }
 
-function showMessage(message, type) {
-    // Create and show a toast message
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} alert-dismissible fade show position-fixed`;
-    toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-    `;
-    document.body.appendChild(toast);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        if (toast.parentElement) toast.remove();
-    }, 3000);
-}
-
-// Update total when quantity changes
-document.getElementById('quantity').addEventListener('input', updateTotal);
-
-// Load cart count on page load
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/cart/count/')
+    updateTotal();
+    
+    {% if user.is_authenticated %}
+        // Check if product is in favorites
+        fetch('{% url "toggle_favorite" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                product_id: {{ product.id }},
+                check_only: true
+            })
+        })
         .then(response => response.json())
         .then(data => {
-            const cartCount = document.getElementById('cart-count');
-            if (cartCount && data.count > 0) {
-                cartCount.textContent = data.count;
-                cartCount.style.display = 'inline';
+            if (data.is_favorite) {
+                document.getElementById('favorite-icon').className = 'bi bi-heart-fill text-danger';
             }
         })
-        .catch(error => console.log('Cart count not loaded'));
+        .catch(error => console.log('Favorite status not loaded'));
+    {% endif %}
 });
 </script>
 {% endblock %}

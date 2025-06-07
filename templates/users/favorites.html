@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Избранное - Tanda.kg{% endblock %}
+
+{% block content %}
+<section class="py-4">
+    <div class="container">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3">Избранное</h1>
+                <p class="text-muted">{{ favorite_products.count }} товаров в избранном</p>
+            </div>
+        </div>
+
+        {% if favorite_products %}
+            <div class="row">
+                {% for product in favorite_products %}
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card h-100 product-card position-relative">
+                        <!-- Favorite Button -->
+                        <button type="button" 
+                                class="btn btn-outline-danger position-absolute top-0 end-0 m-2"
+                                style="z-index: 10;"
+                                onclick="toggleFavorite({{ product.id }}, this)">
+                            <i class="bi bi-heart-fill"></i>
+                        </button>
+                        
+                        <a href="{% url 'product_detail' product.pk %}" class="text-decoration-none">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.name }}" 
+                                     style="height: 240px; object-fit: cover;">
+                            {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 240px;">
+                                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                            {% endif %}
+                        </a>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <!-- Product Name -->
+                            <h6 class="card-title mb-2">
+                                <a href="{% url 'product_detail' product.pk %}" 
+                                   class="text-decoration-none text-dark">
+                                    {{ product.name|truncatechars:60 }}
+                                </a>
+                            </h6>
+                            
+                            <!-- Producer -->
+                            <p class="text-muted mb-2" style="font-size: 0.85rem;">
+                                <a href="{% url 'producer_detail' product.producer.pk %}" 
+                                   class="text-decoration-none text-muted">
+                                    <i class="bi bi-shop"></i> {{ product.producer.name }}
+                                    {% if product.producer.is_verified %}
+                                        <i class="bi bi-patch-check-fill text-primary"></i>
+                                    {% endif %}
+                                </a>
+                            </p>
+                            
+                            <!-- Price -->
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="h6 mb-0 fw-bold text-primary">
+                                        {{ product.price|floatformat:0 }} сом
+                                    </span>
+                                    {% if product.num_sales > 0 %}
+                                        <small class="text-muted">
+                                            <i class="bi bi-bag-check"></i> {{ product.num_sales }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="d-grid gap-2">
+                                    <button type="button" 
+                                            class="btn btn-outline-primary-custom btn-sm"
+                                            onclick="addToCart({{ product.id }})">
+                                        <i class="bi bi-bag-plus"></i> В корзину
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty Favorites -->
+            <div class="text-center py-5">
+                <i class="bi bi-heart" style="font-size: 4rem; color: #dee2e6;"></i>
+                <h4 class="mt-3 text-muted">Нет избранных товаров</h4>
+                <p class="text-muted">Добавьте товары в избранное, чтобы быстро их найти</p>
+                <a href="{% url 'products' %}" class="btn btn-primary-custom">
+                    <i class="bi bi-shop"></i> Перейти в каталог
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+function toggleFavorite(productId, button) {
+    fetch('{% url "toggle_favorite" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            product_id: productId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (!data.is_favorite) {
+                // Remove from favorites page
+                button.closest('.col-lg-3').remove();
+                showMessage(data.message, 'info');
+                
+                // Check if no items left
+                if (document.querySelectorAll('.product-card').length === 0) {
+                    setTimeout(() => location.reload(), 500);
+                }
+            }
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Ошибка при обновлении избранного', 'error');
+    });
+}
+
+function addToCart(productId) {
+    fetch('{% url "add_to_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update cart count in navbar
+            updateCartCount();
+            showMessage(data.message, 'success');
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Ошибка при добавлении в корзину', 'error');
+    });
+}
+
+function updateCartCount() {
+    fetch('{% url "cart_count" %}')
+        .then(response => response.json())
+        .then(data => {
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount && data.count > 0) {
+                cartCount.textContent = data.count;
+                cartCount.style.display = 'inline';
+            } else if (cartCount) {
+                cartCount.style.display = 'none';
+            }
+        });
+}
+
+function showMessage(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

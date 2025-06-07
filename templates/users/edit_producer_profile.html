@@ -45,14 +45,9 @@
                                        class="form-control" 
                                        id="id_name" 
                                        name="name" 
-                                       value="{{ form.name.value|default:producer.name }}" 
+                                       value="{{ producer.name }}" 
                                        placeholder="Название вашего бренда"
                                        required>
-                                {% if form.name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.name.errors.0 }}
-                                    </div>
-                                {% endif %}
                             </div>
 
                             <!-- Description -->
@@ -65,12 +60,7 @@
                                           name="description" 
                                           rows="4" 
                                           placeholder="Расскажите о вашем бизнесе"
-                                          required>{{ form.description.value|default:producer.description }}</textarea>
-                                {% if form.description.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.description.errors.0 }}
-                                    </div>
-                                {% endif %}
+                                          required>{{ producer.description }}</textarea>
                             </div>
 
                             <!-- Region -->
@@ -89,11 +79,44 @@
                                     <option value="batken" {% if producer.region == 'batken' %}selected{% endif %}>Баткен</option>
                                     <option value="other" {% if producer.region == 'other' %}selected{% endif %}>Другой</option>
                                 </select>
-                                {% if form.region.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.region.errors.0 }}
-                                    </div>
-                                {% endif %}
+                            </div>
+
+                            <!-- Contact Information Section -->
+                            <h5 class="mb-3 text-primary">
+                                <i class="bi bi-telephone"></i> Контактная информация
+                            </h5>
+
+                            <!-- Phone Number -->
+                            <div class="mb-3">
+                                <label for="id_phone_number" class="form-label">
+                                    <i class="bi bi-phone"></i> Номер телефона
+                                </label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="id_phone_number" 
+                                       name="phone_number" 
+                                       value="{{ producer.phone_number|default:'' }}" 
+                                       placeholder="+996 700 123 456"
+                                       pattern="^\+?[0-9\s\-\(\)]+$">
+                                <div class="form-text">Формат: +996 700 123 456 или 0700 123 456</div>
+                            </div>
+
+                            <!-- WhatsApp Number -->
+                            <div class="mb-3">
+                                <label for="id_whatsapp_number" class="form-label">
+                                    <i class="bi bi-whatsapp text-success"></i> WhatsApp номер
+                                </label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="id_whatsapp_number" 
+                                       name="whatsapp_number" 
+                                       value="{{ producer.whatsapp_number|default:'' }}" 
+                                       placeholder="996700123456"
+                                       pattern="^[0-9]+$">
+                                <div class="form-text">
+                                    <strong>Важно:</strong> Только цифры без + и пробелов. Например: 996700123456
+                                    <br>Покупатели смогут связаться с вами через WhatsApp
+                                </div>
                             </div>
 
                             <!-- Website -->
@@ -105,16 +128,15 @@
                                        class="form-control" 
                                        id="id_website" 
                                        name="website" 
-                                       value="{{ form.website.value|default:producer.website }}" 
+                                       value="{{ producer.website|default:'' }}" 
                                        placeholder="https://yourwebsite.com">
-                                {% if form.website.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.website.errors.0 }}
-                                    </div>
-                                {% endif %}
                             </div>
 
                             <!-- Logo Upload -->
+                            <h5 class="mb-3 text-primary">
+                                <i class="bi bi-images"></i> Изображения
+                            </h5>
+
                             <div class="mb-3">
                                 <label for="id_logo" class="form-label">
                                     <i class="bi bi-image"></i> Логотип
@@ -134,11 +156,6 @@
                                        name="logo" 
                                        accept="image/*">
                                 <div class="form-text">Загрузите изображение для логотипа (JPG, PNG)</div>
-                                {% if form.logo.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.logo.errors.0 }}
-                                    </div>
-                                {% endif %}
                             </div>
 
                             <!-- QR Code Upload -->
@@ -164,11 +181,6 @@
                                     <strong>Важно:</strong> Загрузите QR-код из вашего банковского приложения 
                                     (MBank, Optima, Bakai и др.) для приема платежей
                                 </div>
-                                {% if form.qr_code.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.qr_code.errors.0 }}
-                                    </div>
-                                {% endif %}
                             </div>
 
                             <!-- Submit Button -->
@@ -209,11 +221,18 @@
                             <li>Demir Bank</li>
                             <li>И другие</li>
                         </ul>
+
+                        <h6 class="mt-3">WhatsApp номер:</h6>
+                        <div class="small">
+                            <p><strong>Правильно:</strong> 996700123456</p>
+                            <p><strong>Неправильно:</strong> +996 700 123 456</p>
+                            <p>Только цифры, начиная с кода страны 996</p>
+                        </div>
                         
                         <div class="alert alert-warning mt-3">
                             <small>
-                                <strong>Важно:</strong> Без QR-кода покупатели не смогут 
-                                оплачивать ваши товары!
+                                <strong>Важно:</strong> Без QR-кода и контактов покупатели не смогут 
+                                связаться с вами и оплачивать товары!
                             </small>
                         </div>
                     </div>
@@ -231,15 +250,29 @@ document.querySelector('form').addEventListener('submit', function(e) {
     submitBtn.disabled = true;
 });
 
-// File input preview
-function previewImage(input, previewId) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById(previewId).src = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
+// Phone number formatting
+document.getElementById('id_phone_number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.startsWith('996')) {
+        value = '+' + value.slice(0, 3) + ' ' + value.slice(3, 6) + ' ' + value.slice(6, 9) + ' ' + value.slice(9, 12);
+    } else if (value.startsWith('0')) {
+        value = value.slice(0, 4) + ' ' + value.slice(4, 7) + ' ' + value.slice(7, 10);
     }
-}
+    e.target.value = value;
+});
+
+// WhatsApp number - only digits
+document.getElementById('id_whatsapp_number').addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/\D/g, ''); // Only digits
+});
+
+// Validate WhatsApp number
+document.getElementById('id_whatsapp_number').addEventListener('blur', function(e) {
+    const value = e.target.value;
+    if (value && !value.startsWith('996')) {
+        alert('WhatsApp номер должен начинаться с 996 (код Кыргызстана)');
+        e.target.focus();
+    }
+});
 </script>
 {% endblock %}

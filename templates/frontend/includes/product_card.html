@@ -1,18 +1,30 @@
-<!-- Product Card Component - Tanda.kg Food Style -->
+<!-- Product Card Component - Updated with Working Cart & Favorites -->
 <div class="card h-100 product-card">
-    <a href="{% url 'product_detail' product.pk %}" class="text-decoration-none">
-        {% if product.image %}
-            <img src="{{ product.image.url }}" 
-                 class="card-img-top" 
-                 alt="{{ product.name }}" 
-                 style="height: 240px; object-fit: cover;">
-        {% else %}
-            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                 style="height: 240px;">
-                <i class="bi bi-{{ product.category.icon|default:'basket3' }} text-muted" style="font-size: 3rem;"></i>
-            </div>
+    <div class="position-relative">
+        <a href="{% url 'product_detail' product.pk %}" class="text-decoration-none">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ product.name }}" 
+                     style="height: 240px; object-fit: cover;">
+            {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                     style="height: 240px;">
+                    <i class="bi bi-{{ product.category.icon|default:'basket3' }} text-muted" style="font-size: 3rem;"></i>
+                </div>
+            {% endif %}
+        </a>
+        
+        <!-- Favorite button overlay -->
+        {% if user.is_authenticated %}
+        <button type="button" 
+                class="btn btn-light position-absolute top-0 end-0 m-2 rounded-circle"
+                style="width: 40px; height: 40px; z-index: 10;"
+                onclick="toggleFavoriteCard({{ product.id }}, this)">
+            <i class="bi bi-heart text-muted" id="fav-icon-{{ product.id }}"></i>
+        </button>
         {% endif %}
-    </a>
+    </div>
     
     <div class="card-body d-flex flex-column p-3">
         <div class="mb-auto">
@@ -80,21 +92,148 @@
             
             <!-- Actions -->
             <div class="d-grid gap-2">
-                <a href="{% url 'product_detail' product.pk %}" 
-                   class="btn btn-outline-primary-custom btn-sm">
-                    <i class="bi bi-eye"></i> Подробнее
-                </a>
+                {% if user.is_authenticated %}
+                    <button type="button" 
+                            class="btn btn-outline-primary-custom btn-sm"
+                            onclick="addToCartCard({{ product.id }}, this)">
+                        <i class="bi bi-bag-plus"></i> В корзину
+                    </button>
+                {% else %}
+                    <a href="{% url 'product_detail' product.pk %}" 
+                       class="btn btn-outline-primary-custom btn-sm">
+                        <i class="bi bi-eye"></i> Подробнее
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
     
     <!-- New Badge for recent products -->
     {% if product.created_at and product.created_at|timesince|slice:":1" == "0" %}
-        <div class="position-absolute top-0 end-0 m-2">
+        <div class="position-absolute top-0 start-0 m-2">
             <span class="badge bg-success">Новинка</span>
         </div>
     {% endif %}
 </div>
+
+<script>
+function addToCartCard(productId, button) {
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Добавляем...';
+    button.disabled = true;
+    
+    fetch('{% url "add_to_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update cart count
+            updateCartCount();
+            
+            // Show success state
+            button.innerHTML = '<i class="bi bi-check"></i> Добавлено!';
+            button.className = 'btn btn-success btn-sm';
+            
+            // Show message
+            showMessage(data.message, 'success');
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.className = 'btn btn-outline-primary-custom btn-sm';
+                button.disabled = false;
+            }, 2000);
+        } else {
+            showMessage(data.message, 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Ошибка при добавлении в корзину', 'error');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function toggleFavoriteCard(productId, button) {
+    const icon = button.querySelector('i');
+    
+    fetch('{% url "toggle_favorite" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            product_id: productId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.is_favorite) {
+                icon.className = 'bi bi-heart-fill text-danger';
+            } else {
+                icon.className = 'bi bi-heart text-muted';
+            }
+            showMessage(data.message, data.is_favorite ? 'success' : 'info');
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Ошибка при обновлении избранного', 'error');
+    });
+}
+
+// Helper function to get CSRF token
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+           '{{ csrf_token }}';
+}
+
+// Load favorite status for this product
+document.addEventListener('DOMContentLoaded', function() {
+    {% if user.is_authenticated %}
+        const icon = document.getElementById('fav-icon-{{ product.id }}');
+        if (icon) {
+            fetch('{% url "toggle_favorite" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    product_id: {{ product.id }},
+                    check_only: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_favorite) {
+                    icon.className = 'bi bi-heart-fill text-danger';
+                }
+            })
+            .catch(error => console.log('Favorite status not loaded'));
+        }
+    {% endif %}
+});
+</script>
 
 <style>
 .product-card {

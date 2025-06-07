@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказ оформлен - Tanda.kg{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8">
+                <div class="card text-center">
+                    <div class="card-body p-5">
+                        <!-- Success Icon -->
+                        <div class="mb-4">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        </div>
+                        
+                        <!-- Success Message -->
+                        <h2 class="text-success mb-3">Заказ успешно оформлен!</h2>
+                        <p class="text-muted mb-4">
+                            Спасибо за ваш заказ! Теперь вы можете оплатить напрямую производителям через QR-коды.
+                        </p>
+                        
+                        <!-- Order Summary -->
+                        {% if recent_orders %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">Ваши заказы:</h5>
+                            
+                            {% for order in recent_orders %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <!-- Product Info -->
+                                        <div class="col-md-4">
+                                            <div class="d-flex align-items-center">
+                                                {% if order.product.image %}
+                                                    <img src="{{ order.product.image.url }}" 
+                                                         class="rounded me-3" 
+                                                         width="60" height="60"
+                                                         style="object-fit: cover;"
+                                                         alt="{{ order.product.name }}">
+                                                {% else %}
+                                                    <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                                         style="width: 60px; height: 60px;">
+                                                        <i class="bi bi-image text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="text-start">
+                                                    <h6 class="mb-1">{{ order.product.name }}</h6>
+                                                    <small class="text-muted">{{ order.product.producer.name }}</small>
+                                                    <br>
+                                                    <small class="text-primary">{{ order.quantity }} x {{ order.product.price|floatformat:0 }} = {{ order.total_price|floatformat:0 }} сом</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- QR Code Payment -->
+                                        <div class="col-md-4 text-center">
+                                            {% if order.product.producer.qr_code %}
+                                                <div class="qr-payment-section">
+                                                    <h6 class="text-primary mb-2">
+                                                        <i class="bi bi-qr-code-scan"></i> Оплатить QR-кодом
+                                                    </h6>
+                                                    <button type="button" 
+                                                            class="btn btn-primary-custom btn-sm mb-2" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#qrModal{{ order.id }}">
+                                                        <i class="bi bi-qr-code"></i> Показать QR-код
+                                                    </button>
+                                                    <br>
+                                                    <small class="text-muted">{{ order.total_price|floatformat:0 }} сом</small>
+                                                </div>
+                                            {% else %}
+                                                <div class="text-muted">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    <br>
+                                                    <small>QR-код недоступен</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Contact Seller -->
+                                        <div class="col-md-4 text-center">
+                                            <h6 class="text-success mb-2">
+                                                <i class="bi bi-chat-dots"></i> Связаться с продавцом
+                                            </h6>
+                                            
+                                            {% if order.product.producer.whatsapp_number %}
+                                                <a href="https://wa.me/{{ order.product.producer.whatsapp_number }}?text=Здравствуйте! Оформил заказ №{{ order.id }}%0A%0AТовар: {{ order.product.name }}%0AКоличество: {{ order.quantity }}%0AСумма: {{ order.total_price|floatformat:0 }} сом%0A%0AКогда можно забрать/получить?" 
+                                                   target="_blank" 
+                                                   class="btn btn-success btn-sm mb-1">
+                                                    <i class="bi bi-whatsapp"></i> WhatsApp
+                                                </a>
+                                                <br>
+                                            {% endif %}
+                                            
+                                            {% if order.product.producer.phone_number %}
+                                                <a href="tel:{{ order.product.producer.phone_number }}" 
+                                                   class="btn btn-outline-primary btn-sm mb-1">
+                                                    <i class="bi bi-phone"></i> Позвонить
+                                                </a>
+                                                <br>
+                                            {% endif %}
+                                            
+                                            {% if not order.product.producer.whatsapp_number and not order.product.producer.phone_number %}
+                                                <small class="text-muted">Контакты не указаны</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- QR Code Modal for each order -->
+                            {% if order.product.producer.qr_code %}
+                            <div class="modal fade" id="qrModal{{ order.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">
+                                                <i class="bi bi-qr-code-scan text-primary"></i> 
+                                                Оплата заказа №{{ order.id }}
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            <!-- Producer Info -->
+                                            <div class="mb-3">
+                                                <h6>{{ order.product.producer.name }}</h6>
+                                                <small class="text-muted">{{ order.product.producer.get_region_display }}</small>
+                                            </div>
+                                            
+                                            <!-- QR Code -->
+                                            <div class="mb-3">
+                                                <img src="{{ order.product.producer.qr_code.url }}" 
+                                                     class="img-fluid border rounded" 
+                                                     alt="QR код для оплаты"
+                                                     style="max-width: 250px;">
+                                            </div>
+                                            
+                                            <!-- Order Details -->
+                                            <div class="border rounded p-3 mb-3 bg-light">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ order.product.name }}</span>
+                                                    <span>{{ order.product.price|floatformat:0 }} сом</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Количество:</span>
+                                                    <span>{{ order.quantity }}</span>
+                                                </div>
+                                                <hr class="my-2">
+                                                <div class="d-flex justify-content-between fw-bold">
+                                                    <span>К оплате:</span>
+                                                    <span class="text-primary">{{ order.total_price|floatformat:0 }} сом</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Payment Instructions -->
+                                            <div class="alert alert-info text-start">
+                                                <small>
+                                                    <strong>Как оплатить:</strong><br>
+                                                    1. Откройте приложение банка<br>
+                                                    2. Выберите "Оплата по QR"<br>
+                                                    3. Отсканируйте код выше<br>
+                                                    4. Укажите сумму: <strong>{{ order.total_price|floatformat:0 }} сом</strong><br>
+                                                    5. Подтвердите оплату<br>
+                                                    6. Сообщите продавцу об оплате
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-success" onclick="markOrderPaid({{ order.id }})">
+                                                <i class="bi bi-check-circle"></i> Я оплатил
+                                            </button>
+                                            
+                                            {% if order.product.producer.whatsapp_number %}
+                                            <a href="https://wa.me/{{ order.product.producer.whatsapp_number }}?text=Здравствуйте! Оплатил заказ №{{ order.id }} на сумму {{ order.total_price|floatformat:0 }} сом через QR-код.%0A%0AТовар: {{ order.product.name }}%0AКоличество: {{ order.quantity }}" 
+                                               target="_blank" 
+                                               class="btn btn-success">
+                                                <i class="bi bi-whatsapp"></i> Уведомить продавца
+                                            </a>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- General Info -->
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle"></i> Важная информация</h6>
+                            <ul class="list-unstyled mb-0 text-start">
+                                <li>• Оплачивайте каждый товар отдельно через QR-код производителя</li>
+                                <li>• После оплаты обязательно уведомите продавца через WhatsApp</li>
+                                <li>• Продавец свяжется с вами для уточнения доставки/самовывоза</li>
+                                <li>• Вы можете отслеживать заказы в разделе "Мои заказы"</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="{% url 'my_orders' %}" class="btn btn-primary-custom">
+                                <i class="bi bi-list-check"></i> Мои заказы
+                            </a>
+                            <a href="{% url 'products' %}" class="btn btn-outline-primary-custom">
+                                <i class="bi bi-shop"></i> Продолжить покупки
+                            </a>
+                        </div>
+                        
+                        <!-- Back to Home -->
+                        <div class="mt-4">
+                            <a href="{% url 'home' %}" class="text-decoration-none text-muted">
+                                <i class="bi bi-house"></i> На главную
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function markOrderPaid(orderId) {
+    // Mark order as paid (optional - for tracking purposes)
+    fetch('/orders/mark-paid/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            order_id: orderId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Заказ отмечен как оплаченный!', 'success');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`qrModal${orderId}`));
+            if (modal) modal.hide();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function showMessage(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

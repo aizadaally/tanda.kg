@@ -57,3 +57,70 @@ class StoreLocation(models.Model):
         
     def __str__(self):
         return f"{self.name} ({self.producer.name})"
+
+
+class UserProfile(models.Model):
+    """Extended user profile"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name='Номер телефона')
+    whatsapp_number = models.CharField(max_length=20, blank=True, null=True, verbose_name='WhatsApp номер',
+                                      help_text='Например: 996777123456 (без +)')
+    birth_date = models.DateField(blank=True, null=True, verbose_name='Дата рождения')
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name='Аватар')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
+    
+    def __str__(self):
+        return f"Профиль {self.user.username}"
+
+
+class Favorite(models.Model):
+    """User's favorite products"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные товары'
+        unique_together = ('user', 'product')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name}"
+
+
+# Utility functions for favorites
+def add_to_favorites(user, product):
+    """Add product to user's favorites"""
+    favorite, created = Favorite.objects.get_or_create(user=user, product=product)
+    return created
+
+
+def remove_from_favorites(user, product):
+    """Remove product from user's favorites"""
+    try:
+        favorite = Favorite.objects.get(user=user, product=product)
+        favorite.delete()
+        return True
+    except Favorite.DoesNotExist:
+        return False
+
+
+def toggle_favorite(user, product):
+    """Toggle product in user's favorites"""
+    favorite, created = Favorite.objects.get_or_create(user=user, product=product)
+    if not created:
+        favorite.delete()
+        return False
+    return True
+
+
+def is_favorite(user, product):
+    """Check if product is in user's favorites"""
+    if not user.is_authenticated:
+        return False
+    return Favorite.objects.filter(user=user, product=product).exists()

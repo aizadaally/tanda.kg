@@ -28,6 +28,11 @@ urlpatterns = [
     path('dashboard/', login_required(views.producer_dashboard), name='producer_dashboard'),
     path('profile/edit/', login_required(views.edit_producer_profile), name='edit_producer_profile'),
     
+    # Favorites
+    path('favorites/', login_required(views.favorites_view), name='favorites_view'),
+    path('favorites/toggle/', login_required(views.toggle_favorite_view), name='toggle_favorite'),
+    path('check-favorite/', login_required(views.check_favorite_status), name='check_favorite_status'),
+    
     # Store locations (stubs for now)
     path('store-location/add/', views.add_store_location, name='add_store_location'),
     path('store-location/<int:pk>/edit/', views.edit_store_location, name='edit_store_location'),
