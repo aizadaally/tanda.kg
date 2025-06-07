@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Tanda.kg - Поддерживай отечественное{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="hero-title">
+                    Поддерживай отечественное –
+                </h1>
+                <h2 class="hero-subtitle">
+                    выбирай лучшее!
+                </h2>
+                <p class="hero-description">
+                    Мы поддерживаем местное производство, повышаем его<br>
+                    узнаваемость и упрощаем доступ к проверенной продукции.<br>
+                    Присоединяйся к нам и выбирай лучшее от отечественных брендов
+                </p>
+                <a href="{% url 'products' %}" class="cta-button">
+                    За покупками
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_products|default:"500+" }}</div>
+                    <div class="stat-label">Товаров в каталоге</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_producers|default:"150+" }}</div>
+                    <div class="stat-label">Проверенных брендов</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Местное производство</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+{% if categories %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Популярные категории</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <a href="{% url 'products' %}?category={{ category.slug }}" class="text-decoration-none">
+                    <div class="category-card">
+                        {% if category.icon %}
+                            <div class="category-icon">
+                                <i class="bi bi-{{ category.icon }}"></i>
+                            </div>
+                        {% else %}
+                            <div class="category-icon">
+                                <i class="bi bi-tag"></i>
+                            </div>
+                        {% endif %}
+                        <h6 class="mb-0">{{ category.name }}</h6>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Popular Products Section -->
+{% if popular_products %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2>Популярные товары</h2>
+            <a href="{% url 'products' %}?sort=popular" class="btn btn-outline-primary-custom">
+                Смотреть все
+            </a>
+        </div>
+        <div class="row">
+            {% for product in popular_products %}
+            <div class="col-lg-3 col-md-6 mb-4">
+                {% include 'frontend/includes/product_card.html' %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- New Products Section -->
+{% if new_products %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2>Новинки</h2>
+            <a href="{% url 'products' %}?sort=newest" class="btn btn-outline-primary-custom">
+                Смотреть все
+            </a>
+        </div>
+        <div class="row">
+            {% for product in new_products %}
+            <div class="col-lg-3 col-md-6 mb-4">
+                {% include 'frontend/includes/product_card.html' %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Benefits Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="mb-5">Почему выбирают Tanda.kg?</h2>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="category-icon text-primary mb-3">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h5 class="mb-3">Проверенное качество</h5>
+                        <p class="text-muted">Мы тщательно отбираем производителей и контролируем качество продукции</p>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="category-icon text-primary mb-3">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h5 class="mb-3">Быстрая доставка</h5>
+                        <p class="text-muted">Доставляем по всему Кыргызстану в кратчайшие сроки</p>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="category-icon text-primary mb-3">
+                            <i class="bi bi-heart"></i>
+                        </div>
+                        <h5 class="mb-3">Поддержка местных</h5>
+                        <p class="text-muted">Покупая у нас, вы поддерживаете развитие отечественного производства</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="mb-4">Готовы начать продавать на Tanda.kg?</h2>
+        <p class="lead mb-4 text-muted">Присоединяйтесь к нашей платформе и расширьте свою аудиторию</p>
+        <div class="d-gap gap-3">
+            {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-primary-custom btn-lg me-3">
+                    Зарегистрироваться
+                </a>
+            {% elif not user.producer %}
+                <a href="{% url 'become_producer' %}" class="btn btn-primary-custom btn-lg me-3">
+                    Стать продавцом
+                </a>
+            {% endif %}
+            <a href="{% url 'products' %}" class="btn btn-outline-primary-custom btn-lg">
+                Смотреть каталог
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

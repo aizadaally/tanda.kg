@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tanda.kg - Маркетплейс местных производителей Кыргызстана{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-red: #c33c2f;
+            --secondary-gray: #6c757d;
+            --light-gray: #f8f9fa;
+            --text-dark: #212529;
+            --border-light: #dee2e6;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            background-color: #ffffff;
+        }
+        
+        /* Header Styles */
+        .header-navbar {
+            background-color: white;
+            border-bottom: 1px solid var(--border-light);
+            padding: 12px 0;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--primary-red) !important;
+            text-decoration: none;
+        }
+        
+        .search-container {
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .search-input {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 12px 50px 12px 16px;
+            font-size: 14px;
+            width: 100%;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 2px rgba(195, 60, 47, 0.1);
+        }
+        
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-red);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: white;
+        }
+        
+        .search-btn:hover {
+            background-color: #a82e23;
+        }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        .nav-link-custom {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 0;
+            transition: color 0.2s;
+        }
+        
+        .nav-link-custom:hover {
+            color: var(--primary-red);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-gray);
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 80px 0 120px;
+            text-align: center;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 300;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+        
+        .hero-subtitle {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--primary-red);
+            margin-bottom: 32px;
+        }
+        
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--secondary-gray);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            line-height: 1.6;
+        }
+        
+        .cta-button {
+            background-color: var(--primary-red);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            background-color: #a82e23;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(195, 60, 47, 0.3);
+        }
+        
+        /* Cards and Components */
+        .product-card {
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-red);
+        }
+        
+        .category-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .category-card:hover {
+            background-color: var(--primary-red);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(195, 60, 47, 0.2);
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            color: var(--primary-red);
+        }
+        
+        .category-card:hover .category-icon {
+            color: white;
+        }
+        
+        /* Statistics Section */
+        .stats-section {
+            background-color: white;
+            padding: 60px 0;
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: var(--secondary-gray);
+            font-size: 1rem;
+        }
+        
+        /* Footer */
+        .footer {
+            background-color: var(--text-dark);
+            color: white;
+            padding: 48px 0 24px;
+            margin-top: 80px;
+        }
+        
+        .footer-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-red);
+            margin-bottom: 16px;
+        }
+        
+        .footer-link {
+            color: #adb5bd;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-link:hover {
+            color: white;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.8rem;
+            }
+            
+            .nav-links {
+                gap: 16px;
+            }
+            
+            .search-container {
+                max-width: 100%;
+                margin: 16px 0;
+            }
+        }
+        
+        /* Button Styles */
+        .btn-primary-custom {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+            color: white;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .btn-primary-custom:hover {
+            background-color: #a82e23;
+            border-color: #a82e23;
+            color: white;
+        }
+        
+        .btn-outline-primary-custom {
+            border: 1px solid var(--primary-red);
+            color: var(--primary-red);
+            background: transparent;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .btn-outline-primary-custom:hover {
+            background-color: var(--primary-red);
+            color: white;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="header-navbar">
+        <div class="container">
+            <div class="row align-items-center">
+                <!-- Logo -->
+                <div class="col-md-2">
+                    <a href="{% url 'home' %}" class="navbar-brand">
+                        TANDA.KG
+                    </a>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="col-md-6">
+                    <div class="search-container">
+                        <form method="GET" action="{% url 'products' %}">
+                            <input type="text" 
+                                   name="search" 
+                                   class="search-input" 
+                                   placeholder="Поиск товаров"
+                                   value="{{ request.GET.search }}">
+                            <button type="submit" class="search-btn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="col-md-4">
+                    <div class="nav-links justify-content-end">
+                        <a href="#" class="nav-link-custom">Корзина</a>
+                        <a href="{% url 'products' %}" class="nav-link-custom">Каталог</a>
+                        <a href="#" class="nav-link-custom">Избранное</a>
+                        <a href="#" class="nav-link-custom">Мои магазины</a>
+                        
+                        {% if user.is_authenticated %}
+                            <div class="dropdown">
+                                <a href="#" 
+                                   class="user-avatar dropdown-toggle" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false"
+                                   style="text-decoration: none;">
+                                    <i class="bi bi-person"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li class="dropdown-header">
+                                        <strong>{{ user.first_name|default:user.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ user.email }}</small>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    {% if user.producer %}
+                                        <li><a class="dropdown-item" href="{% url 'producer_dashboard' %}">
+                                            <i class="bi bi-speedometer2"></i> Мой магазин
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'product_add' %}">
+                                            <i class="bi bi-plus-circle"></i> Добавить товар
+                                        </a></li>
+                                    {% else %}
+                                        <li><a class="dropdown-item" href="{% url 'become_producer' %}">
+                                            <i class="bi bi-shop-window"></i> Стать продавцом
+                                        </a></li>
+                                    {% endif %}
+                                    
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="bi bi-bag"></i> Мои заказы
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="bi bi-heart"></i> Избранное
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="bi bi-box-arrow-right"></i> Выйти
+                                    </a></li>
+                                </ul>
+                            </div>
+                        {% else %}
+                            <div class="dropdown">
+                                <a href="#" 
+                                   class="user-avatar dropdown-toggle" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false"
+                                   style="text-decoration: none;">
+                                    <i class="bi bi-person"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'login' %}">
+                                        <i class="bi bi-box-arrow-in-right"></i> Войти
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'register' %}">
+                                        <i class="bi bi-person-plus"></i> Регистрация
+                                    </a></li>
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="footer-brand">TANDA.KG</div>
+                    <p class="text-muted">Маркетплейс местных производителей Кыргызстана</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-white mb-3">Покупателям</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="footer-link">Как покупать</a></li>
+                        <li><a href="#" class="footer-link">Доставка</a></li>
+                        <li><a href="#" class="footer-link">Возврат</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-white mb-3">Продавцам</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="footer-link">Как продавать</a></li>
+                        <li><a href="#" class="footer-link">Тарифы</a></li>
+                        <li><a href="#" class="footer-link">Документы</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-white mb-3">Контакты</h6>
+                    <p class="text-muted mb-1">+996 xxx xxx xxx</p>
+                    <p class="text-muted">info@tanda.kg</p>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: #495057;">
+            <div class="text-center text-muted">
+                <small>&copy; 2025 Tanda.kg. Все права защищены.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

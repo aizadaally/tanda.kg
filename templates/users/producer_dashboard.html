@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Мой магазин - {{ producer.name }} - Tanda.kg{% endblock %}
+
+{% block content %}
+<section class="py-4">
+    <div class="container">
+        <!-- Header -->
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    {% if producer.logo %}
+                        <img src="{{ producer.logo.url }}" 
+                             class="rounded-circle me-3" 
+                             width="60" height="60"
+                             alt="{{ producer.name }}">
+                    {% else %}
+                        <div class="bg-light rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-shop" style="font-size: 1.5rem;"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h1 class="h3 mb-1">{{ producer.name }}</h1>
+                        <p class="text-muted mb-0">
+                            {{ producer.get_region_display }}
+                            {% if producer.is_verified %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-patch-check"></i> Проверен
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2">
+                                    <i class="bi bi-clock"></i> На проверке
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'edit_producer_profile' %}" class="btn btn-outline-primary-custom me-2">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+                <a href="{% url 'product_add' %}" class="btn btn-primary-custom">
+                    <i class="bi bi-plus-circle"></i> Добавить товар
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-box-seam text-primary" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ total_products }}</h4>
+                        <small class="text-muted">Товаров</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-graph-up text-success" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ total_sales }}</h4>
+                        <small class="text-muted">Продаж</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-eye text-info" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ total_views|default:"0" }}</h4>
+                        <small class="text-muted">Просмотров</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-star text-warning" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ average_rating|default:"0"|floatformat:1 }}</h4>
+                        <small class="text-muted">Рейтинг</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        {% if not producer.is_verified %}
+        <div class="alert alert-warning mb-4">
+            <h6><i class="bi bi-exclamation-triangle"></i> Ваш аккаунт на проверке</h6>
+            <p class="mb-0">Администратор проверит ваши данные в течение 1-2 рабочих дней. После подтверждения вы сможете публиковать товары.</p>
+        </div>
+        {% endif %}
+
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-qr-code-scan text-primary"></i> QR-код для оплаты
+                        </h5>
+                        {% if producer.qr_code %}
+                            <div class="text-center mb-3">
+                                <img src="{{ producer.qr_code.url }}" 
+                                     class="img-fluid border rounded" 
+                                     style="max-width: 150px;"
+                                     alt="QR код">
+                            </div>
+                            <p class="text-success">
+                                <i class="bi bi-check-circle"></i> QR-код загружен
+                            </p>
+                        {% else %}
+                            <p class="text-muted">QR-код не загружен. Покупатели не смогут оплачивать ваши товары.</p>
+                        {% endif %}
+                        <a href="{% url 'edit_producer_profile' %}" class="btn btn-outline-primary btn-sm">
+                            {% if producer.qr_code %}Изменить{% else %}Загрузить{% endif %} QR-код
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-shop text-primary"></i> Профиль магазина
+                        </h5>
+                        <p class="text-muted">{{ producer.description|truncatechars:100 }}</p>
+                        {% if producer.website %}
+                            <p><a href="{{ producer.website }}" target="_blank" class="text-decoration-none">
+                                <i class="bi bi-globe"></i> Посетить сайт
+                            </a></p>
+                        {% endif %}
+                        <a href="{% url 'edit_producer_profile' %}" class="btn btn-outline-primary btn-sm">
+                            Редактировать профиль
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Мои товары</h4>
+                    <a href="{% url 'product_add' %}" class="btn btn-primary-custom">
+                        <i class="bi bi-plus-circle"></i> Добавить товар
+                    </a>
+                </div>
+                
+                {% if products %}
+                    <div class="row">
+                        {% for product in products %}
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="card h-100">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" 
+                                         class="card-img-top" 
+                                         style="height: 200px; object-fit: cover;"
+                                         alt="{{ product.name }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                         style="height: 200px;">
+                                        <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title">{{ product.name }}</h6>
+                                    <p class="text-primary fw-bold">{{ product.price|floatformat:0 }} сом</p>
+                                    <div class="mt-auto">
+                                        <small class="text-muted d-block">
+                                            Продаж: {{ product.num_sales }}
+                                        </small>
+                                        <div class="btn-group w-100 mt-2">
+                                            <a href="{% url 'product_detail' product.pk %}" 
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'product_edit' product.pk %}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'product_delete' product.pk %}" 
+                                               class="btn btn-outline-danger btn-sm"
+                                               onclick="return confirm('Удалить товар?')">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-box-seam" style="font-size: 4rem; color: #dee2e6;"></i>
+                        <h5 class="mt-3 text-muted">У вас пока нет товаров</h5>
+                        <p class="text-muted">Добавьте первый товар, чтобы начать продавать</p>
+                        <a href="{% url 'product_add' %}" class="btn btn-primary-custom">
+                            <i class="bi bi-plus-circle"></i> Добавить первый товар
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

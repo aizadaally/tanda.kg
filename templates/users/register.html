@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация - Tanda.kg{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <!-- Header -->
+                        <div class="text-center mb-4">
+                            <h1 class="h3 text-primary fw-bold">TANDA.KG</h1>
+                            <h2 class="h4 mb-2">Создать аккаунт</h2>
+                            <p class="text-muted">Присоединяйтесь к сообществу местных производителей</p>
+                        </div>
+
+                        <!-- Registration Form -->
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <!-- Display Form Errors -->
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <!-- Personal Information -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                            <i class="bi bi-person"></i> Имя *
+                                        </label>
+                                        {{ form.first_name }}
+                                        {% if form.first_name.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.first_name.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                            <i class="bi bi-person"></i> Фамилия *
+                                        </label>
+                                        {{ form.last_name }}
+                                        {% if form.last_name.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.last_name.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Username -->
+                            <div class="mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">
+                                    <i class="bi bi-at"></i> Имя пользователя *
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.help_text %}
+                                    <div class="form-text">{{ form.username.help_text }}</div>
+                                {% endif %}
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.username.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    <i class="bi bi-envelope"></i> Email *
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.email.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Password Fields -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                            <i class="bi bi-lock"></i> Пароль *
+                                        </label>
+                                        {{ form.password1 }}
+                                        {% if form.password1.help_text %}
+                                            <div class="form-text">{{ form.password1.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.password1.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.password1.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                            <i class="bi bi-lock-fill"></i> Подтвердите пароль *
+                                        </label>
+                                        {{ form.password2 }}
+                                        {% if form.password2.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.password2.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Type Selection -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-person-badge"></i> Тип аккаунта *
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card border-2 account-type-card" style="cursor: pointer;" onclick="selectAccountType('buyer')">
+                                            <div class="card-body text-center">
+                                                <input type="radio" class="form-check-input" name="account_type" value="buyer" id="buyer" 
+                                                       {% if form.account_type.value == 'buyer' or not form.account_type.value %}checked{% endif %}>
+                                                <i class="bi bi-cart3 d-block mt-2 mb-2" style="font-size: 2rem; color: var(--primary-red);"></i>
+                                                <h6>Покупатель</h6>
+                                                <small class="text-muted">Я хочу покупать товары</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card border-2 account-type-card" style="cursor: pointer;" onclick="selectAccountType('producer')">
+                                            <div class="card-body text-center">
+                                                <input type="radio" class="form-check-input" name="account_type" value="producer" id="producer"
+                                                       {% if form.account_type.value == 'producer' %}checked{% endif %}>
+                                                <i class="bi bi-shop d-block mt-2 mb-2" style="font-size: 2rem; color: var(--primary-red);"></i>
+                                                <h6>Производитель</h6>
+                                                <small class="text-muted">Я хочу продавать товары</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if form.account_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.account_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Terms and Conditions -->
+                            <div class="mb-3 form-check">
+                                {{ form.terms }}
+                                <label class="form-check-label" for="{{ form.terms.id_for_label }}">
+                                    Я согласен с <a href="#" class="text-decoration-none">Условиями использования</a> 
+                                    и <a href="#" class="text-decoration-none">Политикой конфиденциальности</a> *
+                                </label>
+                                {% if form.terms.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.terms.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>ой конфиденциальности</a> *
+                                </label>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary-custom btn-lg">
+                                    <i class="bi bi-person-plus"></i> Создать аккаунт
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Divider -->
+                        <hr class="my-4">
+
+                        <!-- Login Link -->
+                        <div class="text-center">
+                            <p class="mb-0 text-muted">Уже есть аккаунт?</p>
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary-custom">
+                                <i class="bi bi-box-arrow-in-right"></i> Войти
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function selectAccountType(type) {
+    // Remove active class from all cards
+    document.querySelectorAll('.account-type-card').forEach(card => {
+        card.classList.remove('border-primary');
+    });
+    
+    // Add active class to selected card
+    const selectedCard = document.querySelector(`#${type}`).closest('.account-type-card');
+    selectedCard.classList.add('border-primary');
+    
+    // Select the radio button
+    document.getElementById(type).checked = true;
+}
+
+// Set initial state based on checked radio
+document.addEventListener('DOMContentLoaded', function() {
+    const checkedRadio = document.querySelector('input[name="account_type"]:checked');
+    if (checkedRadio) {
+        const selectedCard = checkedRadio.closest('.account-type-card');
+        selectedCard.classList.add('border-primary');
+    }
+    
+    // Form submission feedback
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Создаем аккаунт...';
+        submitBtn.disabled = true;
+        
+        // Re-enable after 5 seconds in case of error
+        setTimeout(() => {
+            submitBtn.innerHTML = '<i class="bi bi-person-plus"></i> Создать аккаунт';
+            submitBtn.disabled = false;
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

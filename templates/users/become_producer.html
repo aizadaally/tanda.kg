@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Стать производителем - Tanda.kg{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <!-- Header -->
+                        <div class="text-center mb-4">
+                            <i class="bi bi-shop" style="font-size: 3rem; color: var(--primary-red);"></i>
+                            <h2 class="h3 mt-2">Стать производителем</h2>
+                            <p class="text-muted">Заполните форму, чтобы начать продавать на Tanda.kg</p>
+                        </div>
+
+                        <!-- Form -->
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <!-- Business Name -->
+                            <div class="mb-3">
+                                <label for="business_name" class="form-label">
+                                    <i class="bi bi-building"></i> Название бизнеса *
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="business_name"
+                                       name="business_name"
+                                       placeholder="Название вашего бренда или компании"
+                                       required>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">
+                                    <i class="bi bi-text-paragraph"></i> Описание деятельности *
+                                </label>
+                                <textarea class="form-control" 
+                                          id="description"
+                                          name="description"
+                                          rows="4"
+                                          placeholder="Расскажите о вашем бизнесе, что вы производите"
+                                          required></textarea>
+                            </div>
+
+                            <!-- Region -->
+                            <div class="mb-3">
+                                <label for="region" class="form-label">
+                                    <i class="bi bi-geo-alt"></i> Регион *
+                                </label>
+                                <select class="form-select" id="region" name="region" required>
+                                    <option value="">Выберите регион</option>
+                                    {% for region_code, region_name in regions %}
+                                    <option value="{{ region_code }}">{{ region_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Website -->
+                            <div class="mb-3">
+                                <label for="website" class="form-label">
+                                    <i class="bi bi-globe"></i> Сайт (необязательно)
+                                </label>
+                                <input type="url" 
+                                       class="form-control" 
+                                       id="website"
+                                       name="website"
+                                       placeholder="https://yourwebsite.com">
+                            </div>
+
+                            <!-- Info Box -->
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-info-circle"></i> Что дальше?</h6>
+                                <small>
+                                    После подачи заявки наш администратор проверит ваш бизнес и подтвердит статус производителя. 
+                                    Это поможет покупателям доверять вашим товарам.
+                                </small>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary-custom btn-lg">
+                                    <i class="bi bi-send"></i> Отправить заявку
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

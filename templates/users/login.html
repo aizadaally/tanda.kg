@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Вход - Tanda.kg{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <!-- Logo and Header -->
+                        <div class="text-center mb-4">
+                            <h2 class="h4 mb-2">Добро пожаловать в</h2>
+                            <h1 class="h3 text-primary fw-bold">TANDA.KG</h1>
+                            <p class="text-muted">Войдите в свой аккаунт</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <!-- Display Messages -->
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            {% if form.errors %}
+                            <div class="alert alert-danger" role="alert">
+                                Неверное имя пользователя или пароль.
+                            </div>
+                            {% endif %}
+
+                            <!-- Username Field -->
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">
+                                    <i class="bi bi-person"></i> Имя пользователя
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="id_username"
+                                       name="username"
+                                       placeholder="Введите имя пользователя"
+                                       required>
+                            </div>
+
+                            <!-- Password Field -->
+                            <div class="mb-3">
+                                <label for="id_password" class="form-label">
+                                    <i class="bi bi-lock"></i> Пароль
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="id_password"
+                                           name="password"
+                                           placeholder="Введите пароль"
+                                           required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                        <i class="bi bi-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Remember Me -->
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe" name="remember_me">
+                                <label class="form-check-label" for="rememberMe">
+                                    Запомнить меня
+                                </label>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary-custom btn-lg">
+                                    <i class="bi bi-box-arrow-in-right"></i> Войти
+                                </button>
+                            </div>
+
+                            <!-- Forgot Password -->
+                            <div class="text-center">
+                                <a href="#" class="text-decoration-none text-muted small">
+                                    Забыли пароль?
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Divider -->
+                        <hr class="my-4">
+
+                        <!-- Register Link -->
+                        <div class="text-center">
+                            <p class="mb-0 text-muted">Нет аккаунта?</p>
+                            <a href="{% url 'register' %}" class="btn btn-outline-primary-custom">
+                                <i class="bi bi-person-plus"></i> Зарегистрироваться
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Demo Accounts Info -->
+                <div class="card mt-3 bg-light">
+                    <div class="card-body p-3">
+                        <small class="text-muted">
+                            <strong>Для тестирования:</strong><br>
+                            <strong>Администратор:</strong> admin / admin123<br>
+                            <strong>Производитель:</strong> producer1 / password123<br>
+                            <strong>Покупатель:</strong> buyer1 / password123
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function togglePassword() {
+    const passwordField = document.getElementById('{{ form.password.id_for_label }}');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'bi bi-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'bi bi-eye';
+    }
+}
+</script>
+{% endblock %}
