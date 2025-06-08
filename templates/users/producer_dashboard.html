@@ -3,6 +3,9 @@
 {% block title %}Мой магазин - {{ producer.name }} - Tanda.kg{% endblock %}
 
 {% block content %}
+<!-- Add CSRF token -->
+{% csrf_token %}
+
 <section class="py-4">
     <div class="container">
         <!-- Header -->
@@ -49,7 +52,7 @@
 
         <!-- Statistics Cards -->
         <div class="row mb-4">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="bi bi-box-seam text-primary" style="font-size: 2rem;"></i>
@@ -58,30 +61,48 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <i class="bi bi-graph-up text-success" style="font-size: 2rem;"></i>
-                        <h4 class="mt-2 mb-1">{{ total_sales }}</h4>
-                        <small class="text-muted">Продаж</small>
+                        <i class="bi bi-bag-check text-success" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ orders.count }}</h4>
+                        <small class="text-muted">Всего заказов</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <i class="bi bi-eye text-info" style="font-size: 2rem;"></i>
-                        <h4 class="mt-2 mb-1">{{ total_views|default:"0" }}</h4>
-                        <small class="text-muted">Просмотров</small>
+                        <i class="bi bi-clock text-warning" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ pending_orders }}</h4>
+                        <small class="text-muted">Ожидают</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <i class="bi bi-star text-warning" style="font-size: 2rem;"></i>
-                        <h4 class="mt-2 mb-1">{{ average_rating|default:"0"|floatformat:1 }}</h4>
-                        <small class="text-muted">Рейтинг</small>
+                        <i class="bi bi-credit-card text-info" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ paid_orders }}</h4>
+                        <small class="text-muted">Оплачены</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ completed_orders }}</h4>
+                        <small class="text-muted">Завершены</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="bi bi-currency-exchange text-primary" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">{{ total_revenue|floatformat:0 }}</h4>
+                        <small class="text-muted">Доход (сом)</small>
                     </div>
                 </div>
             </div>
@@ -95,8 +116,9 @@
         </div>
         {% endif %}
 
+        <!-- Quick Actions Row -->
         <div class="row mb-4">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-3">
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
@@ -121,7 +143,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-3">
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
@@ -139,7 +161,156 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-telephone text-primary"></i> Контакты
+                        </h5>
+                        {% if producer.whatsapp_number or producer.phone_number %}
+                            {% if producer.whatsapp_number %}
+                                <p class="mb-1">
+                                    <i class="bi bi-whatsapp text-success"></i> 
+                                    <a href="https://wa.me/{{ producer.whatsapp_number }}" target="_blank" class="text-decoration-none">
+                                        +{{ producer.whatsapp_number }}
+                                    </a>
+                                </p>
+                            {% endif %}
+                            {% if producer.phone_number %}
+                                <p class="mb-1">
+                                    <i class="bi bi-phone"></i> 
+                                    <a href="tel:{{ producer.phone_number }}" class="text-decoration-none">
+                                        {{ producer.phone_number }}
+                                    </a>
+                                </p>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">Контакты не указаны. Покупатели не смогут связаться с вами.</p>
+                        {% endif %}
+                        <a href="{% url 'edit_producer_profile' %}" class="btn btn-outline-primary btn-sm">
+                            {% if producer.whatsapp_number or producer.phone_number %}Изменить{% else %}Добавить{% endif %} контакты
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Recent Orders Section -->
+        {% if recent_orders %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Последние заказы</h4>
+                    <a href="{% url 'producer_orders' %}" class="btn btn-outline-primary-custom">
+                        <i class="bi bi-list"></i> Все заказы
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Заказ</th>
+                                        <th>Покупатель</th>
+                                        <th>Товар</th>
+                                        <th>Количество</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Дата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_orders %}
+                                    <tr id="order-row-{{ order.id }}">
+                                        <td>
+                                            <strong>#{{ order.id }}</strong>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ order.buyer_name }}</strong>
+                                                {% if order.buyer_phone %}
+                                                    <br><small class="text-muted">{{ order.buyer_phone }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if order.product.image %}
+                                                    <img src="{{ order.product.image.url }}" 
+                                                         class="rounded me-2" 
+                                                         width="40" height="40"
+                                                         style="object-fit: cover;"
+                                                         alt="{{ order.product.name }}">
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ order.product.name|truncatechars:30 }}</strong>
+                                                    <br><small class="text-muted">{{ order.product.price|floatformat:0 }} сом/шт</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ order.quantity }} шт</td>
+                                        <td>
+                                            <strong class="text-primary">{{ order.total_price|floatformat:0 }} сом</strong>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" id="status-{{ order.id }}">
+                                                {% if order.status == 'pending' %}
+                                                    <span class="badge bg-warning">Ожидает оплаты</span>
+                                                {% elif order.status == 'paid' %}
+                                                    <span class="badge bg-info">Оплачен</span>
+                                                {% elif order.status == 'completed' %}
+                                                    <span class="badge bg-success">Завершен</span>
+                                                {% elif order.status == 'cancelled' %}
+                                                    <span class="badge bg-danger">Отменен</span>
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small>{{ order.created_at|date:"d.m.Y H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                {% if order.status == 'pending' %}
+                                                    <button class="btn btn-outline-success btn-sm" 
+                                                            onclick="updateOrderStatus({{ order.id }}, 'paid')"
+                                                            title="Отметить как оплаченный">
+                                                        <i class="bi bi-credit-card"></i>
+                                                    </button>
+                                                {% endif %}
+                                                {% if order.status == 'paid' %}
+                                                    <button class="btn btn-outline-primary btn-sm" 
+                                                            onclick="updateOrderStatus({{ order.id }}, 'completed')"
+                                                            title="Завершить заказ">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                {% endif %}
+                                                {% if order.status in 'pending,paid' %}
+                                                    <button class="btn btn-outline-danger btn-sm" 
+                                                            onclick="updateOrderStatus({{ order.id }}, 'cancelled')"
+                                                            title="Отменить заказ">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                {% endif %}
+                                                {% if order.buyer_phone %}
+                                                    <a href="tel:{{ order.buyer_phone }}" class="btn btn-outline-info btn-sm" title="Позвонить">
+                                                        <i class="bi bi-phone"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Products Section -->
         <div class="row">
@@ -210,4 +381,120 @@
         </div>
     </div>
 </section>
+
+<script>
+// CSRF token for AJAX requests
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+}
+
+// Update order status
+function updateOrderStatus(orderId, newStatus) {
+    const statusNames = {
+        'pending': 'Ожидает оплаты',
+        'paid': 'Оплачен', 
+        'completed': 'Завершен',
+        'cancelled': 'Отменен'
+    };
+
+    const confirmation = {
+        'paid': 'Отметить заказ как оплаченный?',
+        'completed': 'Завершить заказ? Это действие увеличит счетчик продаж.',
+        'cancelled': 'Отменить заказ?'
+    };
+
+    if (!confirm(confirmation[newStatus])) return;
+
+    // Show loading state
+    const row = document.getElementById(`order-row-${orderId}`);
+    if (row) {
+        row.style.opacity = '0.6';
+    }
+
+    fetch('{% url "update_order_status_producer" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            order_id: orderId,
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update status badge
+            const statusElement = document.getElementById(`status-${orderId}`);
+            if (statusElement) {
+                let badgeClass = 'badge ';
+                switch(newStatus) {
+                    case 'pending': badgeClass += 'bg-warning'; break;
+                    case 'paid': badgeClass += 'bg-info'; break;
+                    case 'completed': badgeClass += 'bg-success'; break;
+                    case 'cancelled': badgeClass += 'bg-danger'; break;
+                }
+                statusElement.innerHTML = `<span class="${badgeClass}">${statusNames[newStatus]}</span>`;
+            }
+
+            // Show success message
+            showMessage(data.message, 'success');
+            
+            // Refresh page after 2 seconds to update counters
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Ошибка при обновлении статуса заказа', 'error');
+    })
+    .finally(() => {
+        if (row) {
+            row.style.opacity = '1';
+        }
+    });
+}
+
+// Show message function
+function showMessage(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+    }, 4000);
+}
+
+// Auto refresh orders every 30 seconds
+setInterval(() => {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            // Update only the orders table if there are new orders
+            const parser = new DOMParser();
+            const newDoc = parser.parseFromString(html, 'text/html');
+            const newTable = newDoc.querySelector('.table-responsive');
+            const currentTable = document.querySelector('.table-responsive');
+            
+            if (newTable && currentTable && newTable.innerHTML !== currentTable.innerHTML) {
+                currentTable.innerHTML = newTable.innerHTML;
+                showMessage('Обновлены данные о заказах', 'info');
+            }
+        })
+        .catch(error => console.log('Auto refresh failed:', error));
+}, 30000); // 30 seconds
+</script>
 {% endblock %}

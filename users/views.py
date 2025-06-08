@@ -1,4 +1,4 @@
-# Add this to users/views.py (UPDATED VERSION)
+# users/views.py - Complete working version
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
@@ -9,6 +9,9 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+from django.db.models import Sum, Count, Q
+from django.utils import timezone
+from datetime import timedelta
 import json
 
 from .forms import SmartRegistrationForm, ProducerProfileForm
@@ -105,7 +108,7 @@ def become_producer(request):
 
 @login_required
 def producer_dashboard(request):
-    """Producer dashboard"""
+    """Producer dashboard with orders and products"""
     try:
         producer = request.user.producer
     except:
@@ -114,22 +117,168 @@ def producer_dashboard(request):
     
     # Get producer's products
     try:
-        from products.models import Product
+        from orders.models import Order
+        
         products = Product.objects.filter(producer=producer).order_by('-created_at')
         total_products = products.count()
         total_sales = sum(product.num_sales for product in products)
-    except:
+        
+        # Get orders for producer's products
+        orders = Order.objects.filter(
+            product__producer=producer
+        ).select_related(
+            'user', 'product'
+        ).order_by('-created_at')
+        
+        # Orders statistics
+        pending_orders = orders.filter(status='pending').count()
+        paid_orders = orders.filter(status='paid').count()
+        completed_orders = orders.filter(status='completed').count()
+        total_revenue = orders.filter(
+            status__in=['paid', 'completed']
+        ).aggregate(
+            total=Sum('total_price')
+        )['total'] or 0
+        
+        # Recent orders (last 10)
+        recent_orders = orders[:10]
+        
+    except Exception as e:
+        print(f"Error in producer_dashboard: {e}")
         products = []
+        orders = []
+        recent_orders = []
         total_products = 0
         total_sales = 0
+        pending_orders = 0
+        paid_orders = 0
+        completed_orders = 0
+        total_revenue = 0
     
     context = {
         'producer': producer,
         'products': products,
+        'orders': orders,
+        'recent_orders': recent_orders,
         'total_products': total_products,
         'total_sales': total_sales,
+        'pending_orders': pending_orders,
+        'paid_orders': paid_orders,
+        'completed_orders': completed_orders,
+        'total_revenue': total_revenue,
     }
     return render(request, 'users/producer_dashboard.html', context)
+
+
+@login_required
+def producer_orders(request):
+    """Dedicated page for producer to view all their orders"""
+    try:
+        producer = request.user.producer
+    except:
+        messages.error(request, 'Вы не являетесь производителем')
+        return redirect('become_producer')
+    
+    # Get orders for producer's products
+    from orders.models import Order
+    
+    orders = Order.objects.filter(
+        product__producer=producer
+    ).select_related(
+        'user', 'product'
+    ).order_by('-created_at')
+    
+    # Filter by status if requested
+    status_filter = request.GET.get('status')
+    if status_filter and status_filter in ['pending', 'paid', 'completed', 'cancelled']:
+        orders = orders.filter(status=status_filter)
+    
+    # Search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        orders = orders.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(product__name__icontains=search_query) |
+            Q(buyer_name__icontains=search_query) |
+            Q(buyer_phone__icontains=search_query)
+        )
+    
+    context = {
+        'producer': producer,
+        'orders': orders,
+        'status_filter': status_filter,
+        'search_query': search_query,
+    }
+    return render(request, 'users/producer_orders.html', context)
+
+
+@login_required
+@require_POST
+def update_order_status_producer(request):
+    """Producer can update order status"""
+    try:
+        producer = request.user.producer
+    except:
+        return JsonResponse({
+            'success': False,
+            'message': 'Вы не являетесь производителем'
+        })
+    
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        status = data.get('status')
+        
+        if not order_id or not status:
+            return JsonResponse({
+                'success': False,
+                'message': 'Не все данные указаны'
+            })
+        
+        from orders.models import Order
+        order = Order.objects.get(
+            id=order_id, 
+            product__producer=producer
+        )
+        
+        # Validate status transition
+        valid_statuses = ['pending', 'paid', 'completed', 'cancelled']
+        if status not in valid_statuses:
+            return JsonResponse({
+                'success': False,
+                'message': 'Неверный статус'
+            })
+        
+        old_status = order.status
+        order.status = status
+        order.save()
+        
+        status_names = {
+            'pending': 'Ожидает оплаты',
+            'paid': 'Оплачен',
+            'completed': 'Завершен',
+            'cancelled': 'Отменен'
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Статус заказа №{order.id} изменен на "{status_names[status]}"',
+            'new_status': status,
+            'status_display': status_names[status]
+        })
+        
+    except Order.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Заказ не найден или не принадлежит вам'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Ошибка: {str(e)}'
+        })
 
 
 @login_required

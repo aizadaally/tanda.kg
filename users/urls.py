@@ -28,6 +28,10 @@ urlpatterns = [
     path('dashboard/', login_required(views.producer_dashboard), name='producer_dashboard'),
     path('profile/edit/', login_required(views.edit_producer_profile), name='edit_producer_profile'),
     
+    # Producer orders management
+    path('orders/', login_required(views.producer_orders), name='producer_orders'),
+    path('orders/update-status/', login_required(views.update_order_status_producer), name='update_order_status_producer'),
+    
     # Favorites
     path('favorites/', login_required(views.favorites_view), name='favorites_view'),
     path('favorites/toggle/', login_required(views.toggle_favorite_view), name='toggle_favorite'),

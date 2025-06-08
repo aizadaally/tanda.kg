@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -42,11 +43,38 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
+        /* LOGO STYLES */
         .navbar-brand {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            text-decoration: none;
+        }
+        
+        .logo-image {
+            height: 40px;
+            width: auto;
+            max-width: 150px;
+            object-fit: contain;
+        }
+        
+        .logo-text {
             font-weight: bold;
             font-size: 1.5rem;
-            color: var(--primary-red) !important;
-            text-decoration: none;
+            color: var(--primary-red);
+            margin-left: 8px;
+        }
+        
+        /* Fallback if logo doesn't load */
+        .logo-fallback {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--primary-red);
         }
         
         .search-container {
@@ -322,6 +350,24 @@
             .header-navbar {
                 padding: 8px 0;
             }
+            
+            .logo-image {
+                height: 35px;
+            }
+            
+            .logo-text {
+                font-size: 1.3rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .logo-image {
+                height: 30px;
+            }
+            
+            .logo-text {
+                font-size: 1.1rem;
+            }
         }
     </style>
     
@@ -335,7 +381,12 @@
                 <!-- Logo -->
                 <div class="col-md-2">
                     <a href="{% url 'home' %}" class="navbar-brand">
-                        TANDA.KG
+                        <img src="{% static 'images/main_logo.svg' %}" 
+                             alt="Tanda.kg" 
+                             class="logo-image"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span class="logo-fallback" style="display: none;">TANDA.KG</span>
+                        <span class="logo-text d-none d-md-inline">TANDA.KG</span>
                     </a>
                 </div>
                 
@@ -392,8 +443,7 @@
                             </a>
                         </div>
 
-
-                                            <!-- User Menu -->
+                    <!-- User Menu -->
                     <div class="nav-item">
                         {% if user.is_authenticated %}
                             <div class="dropdown">
@@ -465,73 +515,6 @@
         </div>
     </div>
 </header>
-                        
-                        {% if user.is_authenticated %}
-                            <div class="dropdown">
-                                <a href="#" 
-                                   class="user-avatar dropdown-toggle" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false"
-                                   style="text-decoration: none;">
-                                    <i class="bi bi-person"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li class="dropdown-header">
-                                        <strong>{{ user.first_name|default:user.username }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ user.email }}</small>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    
-                                    {% if user.producer %}
-                                        <li><a class="dropdown-item" href="{% url 'producer_dashboard' %}">
-                                            <i class="bi bi-speedometer2"></i> Мой магазин
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="{% url 'product_add' %}">
-                                            <i class="bi bi-plus-circle"></i> Добавить товар
-                                        </a></li>
-                                    {% else %}
-                                        <li><a class="dropdown-item" href="{% url 'become_producer' %}">
-                                            <i class="bi bi-shop-window"></i> Стать продавцом
-                                        </a></li>
-                                    {% endif %}
-                                    
-                                    <li><a class="dropdown-item" href="{% url 'cart_view' %}">
-                                        <i class="bi bi-bag"></i> Моя корзина
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'favorites_view' %}">
-                                        <i class="bi bi-heart"></i> Избранное
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'logout' %}">
-                                        <i class="bi bi-box-arrow-right"></i> Выйти
-                                    </a></li>
-                                </ul>
-                            </div>
-                        {% else %}
-                            <div class="dropdown">
-                                <a href="#" 
-                                   class="user-avatar dropdown-toggle" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false"
-                                   style="text-decoration: none;">
-                                    <i class="bi bi-person"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{% url 'login' %}">
-                                        <i class="bi bi-box-arrow-in-right"></i> Войти
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'register' %}">
-                                        <i class="bi bi-person-plus"></i> Регистрация
-                                    </a></li>
-                                </ul>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
 
     <!-- Main Content -->
     <main>
@@ -544,7 +527,13 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-3">
-                    <div class="footer-brand">TANDA.KG</div>
+                    <div class="footer-brand">
+                        <img src="{% static 'images/main_logo.svg' %}" 
+                             alt="Tanda.kg" 
+                             style="height: 30px; width: auto; margin-right: 8px;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                        <span style="display: none;">TANDA.KG</span>
+                    </div>
                     <p class="text-muted">Маркетплейс местных производителей Кыргызстана</p>
                 </div>
                 <div class="col-md-3">
